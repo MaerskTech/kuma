@@ -478,6 +478,28 @@ func buildGrpcService(params configParameters, useTokenPath bool, clusterName st
 									IntValue: 0,
 								},
 							},
+							// Bump grpc.max_receive_message_length to 16 MiB.
+							//
+							// gRPC C-Core sizes the per-stream HTTP/2 receive flow-control
+							// window from this argument. The C-Core default of 4 MiB caps
+							// the window too small for the initial xDS push on gateway DPs
+							// with hundreds of listeners (~640 KiB Listener payload plus
+							// concurrent CDS/EDS/SDS frames in the same stream). Under
+							// that load the receive window depletes mid-push, the gRPC
+							// channel stalls, and libgrpc-cpp aborts the stream with
+							// CANCELLED ~360 ms after the LDS dispatch — preventing
+							// Envoy from ACKing LDS.
+							//
+							// Per-arg ablation confirmed this is the single load-bearing
+							// change for the cold-start LDS-strand on large-snapshot
+							// gateway DPs: bdp_probe=0 alone does not help, and
+							// write_buffer_size=4 MiB alone does not help; only the
+							// receive-message-length cap.
+							"grpc.max_receive_message_length": {
+								ValueSpecifier: &envoy_core_v3.GrpcService_GoogleGrpc_ChannelArgs_Value_IntValue{
+									IntValue: 16777216, // 16 MiB
+								},
+							},
 						},
 					},
 				},
