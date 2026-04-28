@@ -34,10 +34,11 @@ type configParameters struct {
 	ReadinessPort        uint32
 	AppProbeProxyEnabled bool
 	AdminAccessLogPath   string
-	XdsHost              string
-	XdsPort              uint32
-	XdsConnectTimeout    time.Duration
-	Workdir              string
+	XdsHost                       string
+	XdsPort                       uint32
+	XdsConnectTimeout             time.Duration
+	XdsGrpcMaxReceiveMessageBytes uint32
+	Workdir                       string
 	MetricsCertPath      string
 	MetricsKeyPath       string
 	DataplaneToken       string

@@ -3,6 +3,7 @@ params:
   adminAddress: 127.0.0.1
   adminPort: 9901
   xdsConnectTimeout: 1s
+  xdsGrpcMaxReceiveMessageBytes: 16777216
   xdsHost: ""
   xdsPort: 0
   corefileTemplatePath: ""

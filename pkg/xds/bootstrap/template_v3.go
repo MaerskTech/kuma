@@ -478,7 +478,9 @@ func buildGrpcService(params configParameters, useTokenPath bool, clusterName st
 									IntValue: 0,
 								},
 							},
-							// Bump grpc.max_receive_message_length to 16 MiB.
+							// Cap on the gRPC C-Core HTTP/2 receive flow-control window,
+							// configurable via BootstrapParamsConfig.XdsGrpcMaxReceiveMessageBytes
+							// (env: KUMA_BOOTSTRAP_SERVER_PARAMS_XDS_GRPC_MAX_RECEIVE_MESSAGE_BYTES).
 							//
 							// gRPC C-Core sizes the per-stream HTTP/2 receive flow-control
 							// window from this argument. The C-Core default of 4 MiB caps
@@ -490,6 +492,9 @@ func buildGrpcService(params configParameters, useTokenPath bool, clusterName st
 							// CANCELLED ~360 ms after the LDS dispatch — preventing
 							// Envoy from ACKing LDS.
 							//
+							// Default raised to 16 MiB. Operators can tune up or down via
+							// the env var without rebuilding the image.
+							//
 							// Per-arg ablation confirmed this is the single load-bearing
 							// change for the cold-start LDS-strand on large-snapshot
 							// gateway DPs: bdp_probe=0 alone does not help, and
@@ -497,7 +502,7 @@ func buildGrpcService(params configParameters, useTokenPath bool, clusterName st
 							// receive-message-length cap.
 							"grpc.max_receive_message_length": {
 								ValueSpecifier: &envoy_core_v3.GrpcService_GoogleGrpc_ChannelArgs_Value_IntValue{
-									IntValue: 16777216, // 16 MiB
+									IntValue: int64(params.XdsGrpcMaxReceiveMessageBytes),
 								},
 							},
 						},
